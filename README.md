@@ -1,4 +1,4 @@
 # MQuad
-Tool for modelling of mitochondrial heteroplasmy
+Mixture Model for Mitochondrial Mutations
 
-Testing
+MQuad is a tool that detects mitochondrial mutations that are informative for clonal substructure inference. 
