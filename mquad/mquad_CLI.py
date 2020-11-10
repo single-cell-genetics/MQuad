@@ -7,7 +7,7 @@ import numpy as np
 from scipy.io import mmread
 from optparse import OptionParser, OptionGroup
 
-from vireoSNP import __version__
+from .version import __version__
 from vireoSNP.utils.io_utils import read_cellSNP, read_vartrix, read_sparse_GeneINFO
 from vireoSNP.utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 
@@ -43,7 +43,7 @@ def main():
     (options, args) = parser.parse_args()
 
     if len(sys.argv[1:]) == 0:
-        print("Welcome to mitoMut v%s!\n" %(__version__))
+        print("Welcome to MQuad v%s!\n" %(__version__))
         print("use -h or --help for help on argument.")
         sys.exit(1)
 
