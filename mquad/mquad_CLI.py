@@ -11,7 +11,7 @@ from .version import __version__
 from vireoSNP.utils.io_utils import read_cellSNP, read_vartrix, read_sparse_GeneINFO
 from vireoSNP.utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 
-from .mitoMut import MitoMut
+from .mquad import Mquad 
 
 START_TIME = time.time()
 
@@ -49,8 +49,8 @@ def main():
 
     ## out directory
     if options.out_dir is None:
-        print("Warning: no outDir provided, we use $cellFilePath/mitoMut/")
-        out_dir = os.path.dirname(os.path.abspath(options.cell_file)) + "/mitoMut/"
+        print("Warning: no outDir provided, we use $cellFilePath/mquad/")
+        out_dir = os.path.dirname(os.path.abspath(options.cell_file)) + "/mquad/"
     elif os.path.dirname(options.out_dir) == "":
         out_dir= "./" + options.out_dir
     else:
@@ -65,7 +65,7 @@ def main():
               "matrix files: AD.mtx,DP.mtx")
         sys.exit(1)
     elif options.mtx_data is not None:
-        print("[mitoMut] Loading matrix files ...")
+        print("[MQuad] Loading matrix files ...")
         matrix_files = options.mtx_data.split(",")
         if len(matrix_files) != 2:
             print("Error: mtxData requires 2 comma separated files")
@@ -77,7 +77,7 @@ def main():
                                 range(cell_dat['AD'].shape[0])]
         
     elif options.vcf_data is not None:
-        print("[mitoMut] Loading cell VCF file ...")
+        print("[MQuad] Loading cell VCF file ...")
         cell_vcf = load_VCF(options.vcf_data, biallelic_only=True)
         cell_dat = read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
         for _key in ['samples', 'variants', 'FixedINFO', 'contigs', 'comments']:
@@ -85,7 +85,7 @@ def main():
         
     else:
         #os.path.isdir(os.path.abspath(options.cell_data)):
-        print("[mitoMut] Loading cell folder ...")
+        print("[MQuad] Loading cell folder ...")
         cell_dat = read_cellSNP(options.cell_data)
         
     ## More options
@@ -93,17 +93,15 @@ def main():
     
     
     ## Main functions
-    mdphd = MitoMut(AD = cell_dat['AD'], DP = cell_dat['DP'], 
+    mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
                     variant_names = cell_dat['variants'])
     
     df = mdphd.fit_deltaBIC(out_dir = out_dir, nproc = nproc, beta_mode = False)
-    print(df)
-    #final = mdphd.filter(by='deltaBIC', threshold = 500, out_dir = out_dir)
-    final = mdphd.rankBIC(top=10, out_dir= out_dir)
+    best_ad, best_dp = mdphd.selectInformativeVariants(out_dir = out_dir)
    
     
     run_time = time.time() - START_TIME
-    print("[mitoMut] All done: %d min %.1f sec" %(int(run_time / 60), 
+    print("[MQuad] All done: %d min %.1f sec" %(int(run_time / 60), 
                                                   run_time % 60))
     print()
     

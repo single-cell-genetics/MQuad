@@ -11,6 +11,7 @@ Installation
 ============
 
 MQuad is available through PyPI_. To install, type the following command line and add ``-U`` for updates:
+
 .. code-block:: bash
 
   pip install -U mquad
