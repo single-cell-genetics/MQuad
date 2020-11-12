@@ -46,3 +46,10 @@ Run the following command line:
 
   mquad --vcfData example/example.vcf.gz -o example_test -p 5
   
+The output files should include:
+
+* passed_ad.mtx, passed_dp.mtx: Sparse matrix files of the AD/DP of qualified variants for downstream clonal analysis
+* top variants heatmap.pdf: Heatmap of the allele frequency of qualified variants
+* deltaBIC_cdf.pdf: A cdf plot of deltaBIC distribution of all variants, including the cutoff determined by MQuad
+* BIC_params.csv: A spreadsheet containing detailed parameters/statistics of all variants, sorted from highest deltaBIC to lowest
+* debug_unsorted_BIC_params.csv: Same spreadsheet as BIC_params.csv but unsorted, for developers' debugging purpose, will probably be removed on later versions of MQuad
