@@ -22,8 +22,8 @@ Alternatively, you can install from this GitHub repository for latest (often dev
 
   pip install -U git+https://github.com/single-cell-genetics/MQuad
 
-Manual and examples
-===================
+Manual
+======
 
 Once installed, you can first check the version and input parameters with ``mquad -h`` 
 
@@ -32,3 +32,17 @@ MQuad recognizes 3 types of input: a cellSNP output folder (containing .vcf and 
 .. code-block:: bash
 
   mquad --vcfData $VCF -o $OUT_DIR -p 20
+  
+The output files will be explained below in the 'Example' section.
+
+Example
+=======
+
+MQuad comes with an example dataset for you to test things out. The mtDNA mutations of this dataset are extracted from `Ludwig et al, Cell, 2019 <https://doi.org/10.1016/j.cell.2019.01.022>`_. It contains 500 background variants, along with 9 variants used in Supp Fig. 2F (and main Fig. 2F). There is also 1 additional variant that is informative but not mentioned in the paper. In total, there are 510 variants in the example dataset.
+
+Run the following command line:
+
+.. code-block:: bash
+
+  mquad --vcfData example/example.vcf.gz -o example_test -p 5
+  
