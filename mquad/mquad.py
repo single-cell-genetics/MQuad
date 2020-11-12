@@ -144,7 +144,7 @@ class Mquad():
         
         minor_cpt_n = np.min(np.array(pi)) * len(_a)
 
-        print("Cells qualified: " + str(len(_a)) + "\tmodel1 BIC:%.2f\tmodel2 BIC:%.2f\t deltaBIC:%.2f" %(model2.model_scores["BIC"],model2.model_scores["BIC"],delta_BIC))
+        print("Cells qualified: " + str(len(_a)) + "\tmodel1 BIC:%.2f\tmodel2 BIC:%.2f\t deltaBIC:%.2f" %(model1.model_scores["BIC"],model2.model_scores["BIC"],delta_BIC))
 
         return len(_a), delta_BIC, params1, params2, model1.model_scores["BIC"], model2.model_scores["BIC"], non_zero, total_DP, median_DP, total_AD, median_AD, new_mutation, as_mutation, fraction_b_allele, minor_cpt_n
 
@@ -232,10 +232,11 @@ class Mquad():
                 print('Out directory already exists, overwriting content inside...')
 
             over0 = self.df.deltaBIC[self.df.deltaBIC > 10]
-            y = np.log10(np.sort(over0))
+            y = np.log10(np.sort(over0.astype(float)))
             x = np.linspace(0, 1, len(over0)+1)[1:]
 
             kl = KneeLocator(x, y, curve="convex", direction="increasing", S=3)
+            #print(kl.knee)
             plt.plot(x, y)
             plt.axvline(x=kl.knee, color="black", linestyle='--',label="cutoff")
             plt.legend()
@@ -243,8 +244,8 @@ class Mquad():
             plt.xlabel("Cumulative probability")
             plt.savefig(out_dir + '/' + 'deltaBIC_cdf.pdf')
 
-            self.final_df = self.sorted_df[0:int(len(points) * (1 - kl_real.knee))]
-            self.final_df = self.sorted_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
+            self.final_df = self.sorted_df[0:int(len(y) * (1 - kl.knee))]
+            self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
             idx = self.final_df.index
             best_ad = self.ad[idx]
             best_dp = self.dp[idx]
@@ -282,17 +283,16 @@ class Mquad():
         return self.df, self.sorted_df
 
 if __name__ == '__main__':
-    #from vireoSNP.utils.io_utils import read_sparse_GeneINFO
-    #from vireoSNP.utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
+    from vireoSNP.utils.io_utils import read_sparse_GeneINFO
+    from vireoSNP.utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 
-    #test_ad = mmread("data/mitoDNA/cellSNP.tag.AD.mtx")
-    #test_dp = mmread("data/mitoDNA/cellSNP.tag.DP.mtx")
+    #test_ad = mmread("C:/Users/aaron/OneDrive/Documents/GitHub/vireo/data/mitoDNA/cellSNP.tag.AD.mtx")
+    #test_dp = mmread("C:/Users/aaron/OneDrive/Documents/GitHub/vireo/data/mitoDNA/cellSNP.tag.DP.mtx")
     
-    cell_vcf = vireoSNP.load_VCF("data/kim/cellSNP.cells.vcf.gz", biallelic_only=True)
+    cell_vcf = vireoSNP.load_VCF("../example/example.vcf.gz", biallelic_only=True)
     cell_dat = vireoSNP.vcf.read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
-    mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
-                    variant_names = cell_vcf['variants'])
+    mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], variant_names= cell_dat['variants'])
 
     #mdphd = MitoMut(AD = test_ad, DP = test_dp)
-    df = mdphd.fit_deltaBIC(out_dir='data/kim/', nproc=15)
-    mdphd.selectInformativeVariants(out_dir = 'outs')
+    df = mdphd.fit_deltaBIC(out_dir='test', nproc=15)
+    mdphd.selectInformativeVariants(out_dir = 'test')

@@ -25,4 +25,10 @@ Alternatively, you can install from this GitHub repository for latest (often dev
 Manual and examples
 ===================
 
-To be continued
+Once installed, you can first check the version and input parameters with ``mquad -h`` 
+
+MQuad recognizes 3 types of input: a cellSNP output folder (containing .vcf and AD/DP sparse matrices), AD/DP sparse matrix files (.mtx), or only the vcf file (cellSNP.cells.vcf.gz). Basic usage is as shown:
+
+.. code-block:: bash
+
+  mquad --vcfData $VCF -o $OUT_DIR -p 20
