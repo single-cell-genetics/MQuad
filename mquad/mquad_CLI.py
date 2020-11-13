@@ -37,6 +37,8 @@ def main():
         help="Seed for random initialization [default: %default]")
     group1.add_option("--nproc", "-p", type="int", dest="nproc", default=1,
         help="Number of subprocesses [default: %default]")
+    group1.add_option("--minDP", type="int", dest="minDP", default=10, 
+        help="Minimum DP to include for modelling [default: 10]")
     
     parser.add_option_group(group0)
     parser.add_option_group(group1)
@@ -90,13 +92,13 @@ def main():
         
     ## More options
     nproc = options.nproc
-    
+    minDP = options.minDP
     
     ## Main functions
     mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
                     variant_names = cell_dat['variants'])
     
-    df = mdphd.fit_deltaBIC(out_dir = out_dir, nproc = nproc, beta_mode = False)
+    df = mdphd.fit_deltaBIC(out_dir = out_dir, nproc = nproc, minDP = minDP, beta_mode = False)
     best_ad, best_dp = mdphd.selectInformativeVariants(out_dir = out_dir)
    
     
