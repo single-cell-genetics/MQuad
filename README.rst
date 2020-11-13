@@ -8,13 +8,13 @@ MQuad is a tool that detects mitochondrial mutations that are informative for cl
 
 A recommended pipeline to generate the neccessary files:
 
-1. use cellSNP to pileup mtDNA variants from raw .bam file(s)
+1. use `cellSNP <https://github.com/single-cell-genetics/cellSNP>`_ to pileup mtDNA variants from raw .bam file(s)
 
 2. use MQuad to differentiate informative mtDNA variants from noisy backbground
 
-3. use vireoSNP to assign cells to clones based on mtDNA variant profile
+3. use `vireoSNP <https://github.com/single-cell-genetics/vireo>`_ to assign cells to clones based on mtDNA variant profile
 
-However, different upstream/downstream packages can also be used if the neccesary file formats are available.
+Different upstream/downstream packages can also be used if the neccesary file formats are available.
 
 Installation
 ============
@@ -36,11 +36,25 @@ Manual
 
 Once installed, you can first check the version and input parameters with ``mquad -h`` 
 
-MQuad recognizes 3 types of input: a cellSNP output folder (containing .vcf and AD/DP sparse matrices), AD/DP sparse matrix files (.mtx), or only the vcf file (cellSNP.cells.vcf.gz). Basic usage is as shown:
+MQuad recognizes 3 types of input:
+
+1. cellSNP output folder with AD and DP sparse matrices (.mtx)
+
+.. code-block:: bash
+
+  mquad -c $INPUT_DIR -o $OUT_DIR -p 20
+
+2. .vcf only
 
 .. code-block:: bash
 
   mquad --vcfData $VCF -o $OUT_DIR -p 20
+
+3. AD and DP sparse matrices (.mtx), comma separated
+
+.. code-block:: bash
+
+  mquad -m cellSNP.tag.AD.mtx, cellSNP.tag.DP.mtx -o $OUT_DIR -p 20
   
 The output files will be explained below in the 'Example' section.
 
