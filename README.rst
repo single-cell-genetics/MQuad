@@ -4,8 +4,17 @@ MQuad
 
 MQuad: Mixture Model for Mitochondrial Mutation detection in single-cell omics data
 
-MQuad is a tool that detects mitochondrial mutations that are informative for 
-clonal substructure inference. 
+MQuad is a tool that detects mitochondrial mutations that are informative for clonal substructure inference. It uses a binomial mixture model to assess the heteroplasmy of mtDNA variants among background noise.
+
+A recommended pipeline to generate the neccessary files:
+
+1. use cellSNP to pileup mtDNA variants from raw .bam file(s)
+
+2. use MQuad to differentiate informative mtDNA variants from noisy backbground
+
+3. use vireoSNP to assign cells to clones based on mtDNA variant profile
+
+However, different upstream/downstream packages can also be used if the neccesary file formats are available.
 
 Installation
 ============
@@ -52,16 +61,16 @@ The output files should include:
 * top variants heatmap.pdf: Heatmap of the allele frequency of qualified variants
 
 .. image:: images/top_var_heatmap.png
-    :width: 200px
+    :width: 100px
     :align: center
-    :height: 100px
+    :height: 50px
     
 * deltaBIC_cdf.pdf: A cdf plot of deltaBIC distribution of all variants, including the cutoff determined by MQuad
 
 .. image:: images/cdf.png
-    :width: 200px
+    :width: 100px
     :align: center
-    :height: 100px
+    :height: 50px
     
 * BIC_params.csv: A spreadsheet containing detailed parameters/statistics of all variants, sorted from highest deltaBIC to lowest
 * debug_unsorted_BIC_params.csv: Same spreadsheet as BIC_params.csv but unsorted, for developers' debugging purpose, will probably be removed on later versions of MQuad
