@@ -56,6 +56,8 @@ MQuad recognizes 3 types of input:
 
   mquad -m cellSNP.tag.AD.mtx, cellSNP.tag.DP.mtx -o $OUT_DIR -p 20
   
+For droplet-based sequencing data, eg. 10X Chromium CNV, scATAC..etc, it is recommended to add ``--minDP 5`` or a smaller value to prevent errors during fitting. The default value is 10, which is suitable for Smart-seq2 data.
+
 The output files will be explained below in the 'Example' section.
 
 Example
