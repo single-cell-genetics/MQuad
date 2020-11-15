@@ -8,7 +8,7 @@ MQuad is a tool that detects mitochondrial mutations that are informative for cl
 
 A recommended pipeline to generate the neccessary files:
 
-1. use `cellSNP <https://github.com/single-cell-genetics/cellSNP>`_ or `cellsnp-lite <https://github.com/single-cell-genetics/cellsnp-lite>`_ (a lightning fast version of cellSNP) to pileup mtDNA variants from raw .bam file(s)
+1. use `cellSNP <https://github.com/single-cell-genetics/cellSNP>`_ or `cellsnp-lite <https://github.com/single-cell-genetics/cellsnp-lite>`_ (a faster version of cellSNP, still at testing stage so might be unstable) to pileup mtDNA variants from raw .bam file(s)
 
 2. use MQuad to differentiate informative mtDNA variants from noisy backbground
 
