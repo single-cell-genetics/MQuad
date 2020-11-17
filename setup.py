@@ -19,7 +19,7 @@ exec(open("./mquad/version.py").read())
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
     
-reqs = ['numpy>=1.9.0', 'scipy>=1.4.0', 'matplotlib', 'BBMix', 'vireoSNP']
+reqs = ['numpy>=1.9.0', 'scipy>=1.4.0', 'matplotlib', 'BBMix', 'vireoSNP', 'kneed']
 
 setup(
     name='mquad',
