@@ -19,7 +19,7 @@ Different upstream/downstream packages can also be used if the neccesary file fo
 Installation
 ============
 
-MQuad is available through PyPI_. To install, type the following command line and add ``-U`` for updates:
+MQuad is available through `PyPI <https://pypi.org/project/MQuad/>`_. To install, type the following command line and add ``-U`` for updates:
 
 .. code-block:: bash
 
