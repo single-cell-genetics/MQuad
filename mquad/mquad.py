@@ -256,6 +256,9 @@ class Mquad():
 
         if self.variants is not None:
             best_vars = np.array(self.variants)[idx]
+            var_file = open(out_dir + '/' + 'passed_variant_names.txt', "w+")
+            var_file.write(str(best_vars))
+            var_file.close()
                 
         if export_heatmap is True:
             af = best_ad/best_dp
