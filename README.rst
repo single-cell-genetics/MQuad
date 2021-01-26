@@ -91,7 +91,8 @@ The output files should include:
 * BIC_params.csv: A spreadsheet containing detailed parameters/statistics of all variants, sorted from highest deltaBIC to lowest
 * debug_unsorted_BIC_params.csv: Same spreadsheet as BIC_params.csv but unsorted, for developers' debugging purpose, will probably be removed on later versions of MQuad
 
-Column description for BIC_params.csv
+Column description for BIC_params.csv:
+
 * num_cells: number of cells passing the sequencing depth threshold (default 10)
 * deltaBIC: score of informativeness, higher is better
 * params1, params2, model1BIC, model2BIC: fitted parameteres for the binomial model, for debugging purposes
