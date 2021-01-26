@@ -256,9 +256,8 @@ class Mquad():
 
         if self.variants is not None:
             best_vars = np.array(self.variants)[idx]
-            var_file = open(out_dir + '/' + 'passed_variant_names.txt', "w+")
-            var_file.write(str(best_vars))
-            var_file.close()
+            with open(out_dir + '/' + 'passed_variant_names.txt', "w+") as var_file:
+                var_file.write('\n'.join(str(var) for var in best_vars))
                 
         if export_heatmap is True:
             af = best_ad/best_dp
@@ -286,15 +285,16 @@ class Mquad():
         return self.df, self.sorted_df
 
 if __name__ == '__main__':
+    import vireoSNP
     from vireoSNP.utils.io_utils import read_sparse_GeneINFO
     from vireoSNP.utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 
     #test_ad = mmread("C:/Users/aaron/OneDrive/Documents/GitHub/vireo/data/mitoDNA/cellSNP.tag.AD.mtx")
     #test_dp = mmread("C:/Users/aaron/OneDrive/Documents/GitHub/vireo/data/mitoDNA/cellSNP.tag.DP.mtx")
     
-    cell_vcf = vireoSNP.load_VCF("../example/example.vcf.gz", biallelic_only=True)
+    cell_vcf = vireoSNP.load_VCF("C:/Users/aaronkwc/Documents/GitHub/MQuad/example/example.vcf.gz", biallelic_only=True)
     cell_dat = vireoSNP.vcf.read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
-    mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], variant_names= cell_dat['variants'])
+    mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], variant_names= cell_vcf['variants'])
 
     #mdphd = MitoMut(AD = test_ad, DP = test_dp)
     df = mdphd.fit_deltaBIC(out_dir='test', nproc=15)

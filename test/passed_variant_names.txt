@@ -1,0 +1,11 @@
+chrM_2956_C_A
+chrM_8003_C_T
+chrM_7790_G_C
+chrM_9628_G_A
+chrM_1984_G_A
+chrM_11185_G_A
+chrM_11285_C_T
+chrM_879_G_A
+chrM_4114_G_A
+chrM_12062_C_T
+chrM_2131_G_A
