@@ -11,7 +11,8 @@ from .version import __version__
 from vireoSNP.utils.io_utils import read_cellSNP, read_vartrix, read_sparse_GeneINFO
 from vireoSNP.utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 
-from .mquad import Mquad 
+from .mquad import Mquad
+from .mquad_batch_mixbin import MquadSparseMixBin
 
 START_TIME = time.time()
 
@@ -39,6 +40,11 @@ def main():
         help="Number of subprocesses [default: %default]")
     group1.add_option("--minDP", type="int", dest="minDP", default=10, 
         help="Minimum DP to include for modelling [default: 10]")
+    group1.add_option("--batchFit", type='int', dest="batch_fit", default=0,
+        help=("1 if fit MixBin model using batch mode, 0 else [default: 0]"))
+    group1.add_option("--batchSize", type='int', dest="batch_size", default=128,
+        help=("Number of variants in one batch, cooperate with --nproc for speeding up [default: 128]"))
+    
     
     parser.add_option_group(group0)
     parser.add_option_group(group1)
@@ -93,14 +99,27 @@ def main():
     ## More options
     nproc = options.nproc
     minDP = options.minDP
+    batch_size = options.batch_size
     
     ## Main functions
-    mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
-                    variant_names = cell_dat['variants'])
-    
-    df = mdphd.fit_deltaBIC(out_dir = out_dir, nproc = nproc, minDP = minDP, beta_mode = False)
+    if options.batch_fit == 0:
+        mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
+                        variant_names = cell_dat['variants'])
+        df = mdphd.fit_deltaBIC(out_dir = out_dir, nproc = nproc, minDP = minDP, beta_mode = False)
+    else:
+        mdphd = MquadSparseMixBin(
+            AD=cell_dat['AD'], 
+            DP=cell_dat['DP'], 
+            variant_names=cell_dat['variants']
+        )
+        df = mdphd.fit_deltaBIC(
+            out_dir=out_dir,
+            minDP=minDP,
+            nproc=nproc,
+            batch_size=batch_size
+        )
+        
     best_ad, best_dp = mdphd.selectInformativeVariants(out_dir = out_dir)
-   
     
     run_time = time.time() - START_TIME
     print("[MQuad] All done: %d min %.1f sec" %(int(run_time / 60), 
