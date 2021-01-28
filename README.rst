@@ -14,6 +14,7 @@ A recommended pipeline to generate the neccessary files:
 
 3. use `vireoSNP <https://github.com/single-cell-genetics/vireo>`_ to assign cells to clones based on mtDNA variant profile
 
+
 Different upstream/downstream packages can also be used if the neccesary file formats are available.
 
 Installation
@@ -70,6 +71,12 @@ Run the following command line:
 .. code-block:: bash
 
   mquad --vcfData example/example.vcf.gz -o example_test -p 5
+  
+or using batch mode tailored for mixture-binomial modelling:
+
+.. code-block:: bash
+
+  mquad --vcfData example/example.vcf.gz -o example_test -p 5 --batchFit 1 --batchSize 5
   
 The output files should include:
 
