@@ -47,50 +47,6 @@ class MquadSparseMixBin():
         if dataset_name is not None:
             self.dataset = dataset_name
     
-    def _sparseMixBinFit(self, valid_ad, valid_dp, valid_row_sizes, fix_seed=None):
-        #input ad dp arrays, output params, BICs, delta BIC        
-        if fix_seed is not None:
-            np.random.seed(fix_seed)
-        
-        model1 = MixtureBinomialSparseBatch(n_components = 1, tor=1e-20)
-        params1 = model1.fit((valid_ad, valid_dp), valid_row_sizes, max_iters=500, early_stop=True)
-        
-        model2 = MixtureBinomialSparseBatch(n_components = 2,tor=1e-20)
-        params2 = model2.fit((valid_ad, valid_dp), valid_row_sizes, max_iters=500, early_stop=True)
-
-        delta_BIC = model1.model_scores["BIC"] - model2.model_scores["BIC"]
-
-        p = params2[:, [0,1]]
-        pi = params2[:, [2,3]]
-        fraction_b_allele = np.min(p, axis=1) * np.array([pi[ith, idx] for ith, idx in enumerate(np.argmin(p, axis=1))])
-
-        new_mutation = np.zeros(p.shape[0], dtype=bool)
-        as_mutation = np.zeros(p.shape[0], dtype=bool)
-        
-        # new_mutation
-        new_mut_sel = (np.max(pi, axis=1) < 0.95) & (np.min(p, axis=1) < 0.05) & (np.max(p, axis=1) > 0.1)
-        new_mutation[new_mut_sel] = True
-        
-        # as_mutation
-        as_mut_sel = (np.min(p, axis=1) > 0.1) & (np.min(pi, axis=1) > 0.15) & (~new_mut_sel)
-        as_mutation[as_mut_sel] = True
-
-        minor_cpt_n = np.min(pi, axis=1) * valid_row_sizes
-        
-        results = {
-            "num_cells": valid_row_sizes,
-            'deltaBIC': delta_BIC,
-            'params1': params1.tolist(),
-            'params2': params2.tolist(),
-            'model1BIC': model1.model_scores["BIC"],
-            'model2BIC': model2.model_scores["BIC"],
-            'new_mutation': new_mutation, 
-            'as_mutation': as_mutation, 
-            'fraction_b_allele': fraction_b_allele, 
-            'num_cells_minor_cpt': minor_cpt_n, 
-        }
-        return results
-
     def _check_outdir_exist(self, out_dir):
         if path.exists(out_dir) is not True:
             try:
@@ -102,43 +58,6 @@ class MquadSparseMixBin():
         else:
             print('Out directory already exists, overwriting content inside...')
             return True
-        
-    def _basicStats(self, valid_ad, valid_dp, valid_row_sizes):
-        #basic staistics
-        #Total DP across all cells
-        left, batch_size = 0, len(valid_row_sizes)
-        stats = ['total_DP', 'median_DP', 'total_AD', 'median_AD', 'num_cells_nonzero_AD']
-        batch_res = {name:np.empty(batch_size) for name in stats}
-        
-        for ith, smp_sz in enumerate(valid_row_sizes):
-            right = left + smp_sz
-            _d = valid_dp[left:right]
-            _a = valid_ad[left:right]
-            batch_res[stats[0]][ith] = np.sum(_d)
-            batch_res[stats[1]][ith] = np.median(_d)
-            batch_res[stats[2]][ith] = np.sum(_a)
-            batch_res[stats[3]][ith] = np.median(_a)
-            batch_res[stats[4]][ith] = np.count_nonzero(_a)
-            
-            left = right
-           
-        return batch_res
-    
-        total_DP = np.sum(_d, axis=1)
-        #Median DP across all cells
-        median_DP = np.median(_d, axis=1)
-        #Total AD across all cells
-        total_AD = np.sum(_a, axis=1)
-        #Median AD across all cells
-        median_AD = np.median(_a, axis=1)
-        #How many cells have this variant?
-        non_zero = np.count_nonzero(_a, axis=1)
-        return {'total_DP' :total_DP,
-                'median_DP':median_DP,
-                'total_AD' :total_AD,
-                'median_AD':median_AD,
-                'num_cells_nonzero_AD':non_zero
-               }
     
     def _addVariantNames(self, valid_rows):
         var_col = 'variant_name'
@@ -149,12 +68,6 @@ class MquadSparseMixBin():
         df_zeros[var_col] = list(set(variants) - set(df[var_col]))
         self.df = pd.concat([df, df_zeros], axis=0, ignore_index=True)
         
-    def _deltaBIC(self, valid_ad, valid_dp, valid_row_sizes):
-        basic_stats = self._basicStats(valid_ad, valid_dp, valid_row_sizes)
-        results = self._sparseMixBinFit(valid_ad, valid_dp, valid_row_sizes)
-        results.update(basic_stats)
-        return results
-    
     def _batchify(self, batch_size, x, y, valid_row_sizes):
         n_samples = valid_row_sizes.shape[0]
         start, item_start = 0, 0
@@ -203,7 +116,7 @@ class MquadSparseMixBin():
         assert(np.sum(valid_row_sizes) == x.shape[0])
         
         with mp.Pool(processes=nproc) as pool:
-            results = pool.starmap_async(self._deltaBIC, self._batchify(batch_size, x, y, valid_row_sizes)).get()
+            results = pool.starmap_async(fit_batch, self._batchify(batch_size, x, y, valid_row_sizes)).get()
         self.df = pd.concat([pd.DataFrame(res) for res in results], axis=0, ignore_index=False)
         
         t1 = time.time()
@@ -268,8 +181,9 @@ class MquadSparseMixBin():
 
         if self.variants is not None:
             best_vars = np.array(self.variants)[idx]
-            with open(out_dir + '/' + 'passed_variant_names.txt', "w+") as var_file:
-                var_file.write('\n'.join(str(var) for var in best_vars))
+            var_file = open(out_dir + '/' + 'passed_variant_names.txt', "w+")
+            var_file.write(str(best_vars))
+            var_file.close()
                 
         if export_heatmap is True:
             af = best_ad/best_dp
@@ -295,6 +209,93 @@ class MquadSparseMixBin():
         self.sorted_df = self.df.sort_values(by=['deltaBIC'], ascending=False)
 
         return self.df, self.sorted_df
+    
+def sparseMixBinFit(valid_ad, valid_dp, valid_row_sizes, fix_seed=None):
+    #input ad dp arrays, output params, BICs, delta BIC        
+    if fix_seed is not None:
+        np.random.seed(fix_seed)
+
+    model1 = MixtureBinomialSparseBatch(n_components = 1, tor=1e-20)
+    params1 = model1.fit((valid_ad, valid_dp), valid_row_sizes, max_iters=500, early_stop=True)
+
+    model2 = MixtureBinomialSparseBatch(n_components = 2,tor=1e-20)
+    params2 = model2.fit((valid_ad, valid_dp), valid_row_sizes, max_iters=500, early_stop=True)
+
+    delta_BIC = model1.model_scores["BIC"] - model2.model_scores["BIC"]
+
+    p = params2[:, [0,1]]
+    pi = params2[:, [2,3]]
+    fraction_b_allele = np.min(p, axis=1) * np.array([pi[ith, idx] for ith, idx in enumerate(np.argmin(p, axis=1))])
+
+    new_mutation = np.zeros(p.shape[0], dtype=bool)
+    as_mutation = np.zeros(p.shape[0], dtype=bool)
+
+    # new_mutation
+    new_mut_sel = (np.max(pi, axis=1) < 0.95) & (np.min(p, axis=1) < 0.05) & (np.max(p, axis=1) > 0.1)
+    new_mutation[new_mut_sel] = True
+
+    # as_mutation
+    as_mut_sel = (np.min(p, axis=1) > 0.1) & (np.min(pi, axis=1) > 0.15) & (~new_mut_sel)
+    as_mutation[as_mut_sel] = True
+
+    minor_cpt_n = np.min(pi, axis=1) * valid_row_sizes
+
+    results = {
+        "num_cells": valid_row_sizes,
+        'deltaBIC': delta_BIC,
+        'params1': params1.tolist(),
+        'params2': params2.tolist(),
+        'model1BIC': model1.model_scores["BIC"],
+        'model2BIC': model2.model_scores["BIC"],
+        'new_mutation': new_mutation, 
+        'as_mutation': as_mutation, 
+        'fraction_b_allele': fraction_b_allele, 
+        'num_cells_minor_cpt': minor_cpt_n, 
+    }
+    return results    
+
+def fit_batch(valid_ad, valid_dp, valid_row_sizes):
+    basic_stats = basicStats(valid_ad, valid_dp, valid_row_sizes)
+    results = sparseMixBinFit(valid_ad, valid_dp, valid_row_sizes)
+    results.update(basic_stats)
+    return results
+    
+def basicStats(valid_ad, valid_dp, valid_row_sizes):
+    #basic staistics
+    #Total DP across all cells
+    left, batch_size = 0, len(valid_row_sizes)
+    stats = ['total_DP', 'median_DP', 'total_AD', 'median_AD', 'num_cells_nonzero_AD']
+    batch_res = {name:np.empty(batch_size) for name in stats}
+
+    for ith, smp_sz in enumerate(valid_row_sizes):
+        right = left + smp_sz
+        _d = valid_dp[left:right]
+        _a = valid_ad[left:right]
+        batch_res[stats[0]][ith] = np.sum(_d)
+        batch_res[stats[1]][ith] = np.median(_d)
+        batch_res[stats[2]][ith] = np.sum(_a)
+        batch_res[stats[3]][ith] = np.median(_a)
+        batch_res[stats[4]][ith] = np.count_nonzero(_a)
+
+        left = right
+
+    return batch_res
+
+    total_DP = np.sum(_d, axis=1)
+    #Median DP across all cells
+    median_DP = np.median(_d, axis=1)
+    #Total AD across all cells
+    total_AD = np.sum(_a, axis=1)
+    #Median AD across all cells
+    median_AD = np.median(_a, axis=1)
+    #How many cells have this variant?
+    non_zero = np.count_nonzero(_a, axis=1)
+    return {'total_DP' :total_DP,
+            'median_DP':median_DP,
+            'total_AD' :total_AD,
+            'median_AD':median_AD,
+            'num_cells_nonzero_AD':non_zero
+           }    
 
 if __name__ == '__main__':
     from vireoSNP.utils.io_utils import read_sparse_GeneINFO
