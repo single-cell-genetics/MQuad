@@ -266,14 +266,16 @@ class Mquad():
         if export_heatmap:
             af = best_ad/best_dp
             #af = af.fillna(0)
-            fig, ax = plt.subplots(figsize=(15,10))
+            fig, ax = plt.subplots(figsize=(8,6))
             plt.title("Allele frequency of top variants")
             plt.style.use('seaborn-dark')
-            pal = sns.cubehelix_palette(start=2, rot=0, dark=0.4, light=1)
+            pal = "YlGnBu"
             if self.variants is not None:
                 sns.heatmap(af, cmap=pal, yticklabels=renamed_vars)
+                plt.yticks(rotation=0)
             else:
                 sns.heatmap(af, cmap=pal)
+                plt.yticks(rotation=0)
             plt.savefig(out_dir + '/' + 'top variants heatmap.pdf')
 
         #export ad dp mtx out for vireo
