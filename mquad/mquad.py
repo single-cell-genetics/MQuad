@@ -17,7 +17,7 @@ import bbmix
 from bbmix.models import MixtureBinomial
 from bbmix.models import MixtureBetaBinomial
 import multiprocessing as mp
-from mquad.utils import *
+from utils import findKnee
 
 
 class Mquad():
@@ -219,53 +219,51 @@ class Mquad():
     def selectInformativeVariants(self, min_cells=2, export_heatmap=True, export_mtx=True, out_dir=None, existing_df=None):
         #takes self.df, return best_ad and best_dp as array
 
-        if self.df is None:
-            if existing_df is not None:
-                #input /path/to/unsorted_debug_BIC_params.csv for existing df if model is already fit
-                self.df = pd.read_csv(existing_df)
-            else:
-                print('fitted model not found! Have you run fit_deltaBIC/fit_logLik yet?')
+        if existing_df is not None:
+            #input /path/to/unsorted_debug_BIC_params.csv for existing df if model is already fit
+            self.df = pd.read_csv(existing_df)
+            self.sorted_df = self.df.sort_values(by=['deltaBIC'], ascending=False)
+
         else:
-            if out_dir is not None:
-                if path.exists(out_dir) is not True:
-                    try:
-                        os.mkdir(out_dir)
-                    except:
-                        print("Can't make directory, do you have permission?")
-            else:
-                print('Out directory already exists, overwriting content inside...')
+            print('fitted model not found! Have you run fit_deltaBIC/fit_logLik yet?')
 
-            #delete after making sure utils work
-            #over0 = self.df.deltaBIC[self.df.deltaBIC > 10]
-            #y = np.log10(np.sort(over0.astype(float)))
-            #x = np.linspace(0, 1, len(over0)+1)[1:]
-            #kl = KneeLocator(x, y, curve="convex", direction="increasing", S=3)
-            #print(kl.knee)
+        if out_dir is not None:
+            if path.exists(out_dir) is not True:
+                try:
+                    os.mkdir(out_dir)
+                except:
+                    print("Can't make directory, do you have permission?")
+        else:
+            print('Out directory already exists, overwriting content inside...')
 
-            x,y,knee = findKnee(self.df.deltaBIC)
-            plt.plot(x, y)
-            plt.axvline(x=knee, color="black", linestyle='--',label="cutoff")
-            plt.legend()
-            plt.ylabel("log10(\u0394BIC)")
-            plt.xlabel("Cumulative probability")
-            plt.savefig(out_dir + '/' + 'deltaBIC_cdf.pdf')
+        x,y,knee = findKnee(self.df.deltaBIC)
+        plt.plot(x, y)
+        plt.axvline(x=knee, color="black", linestyle='--',label="cutoff")
+        plt.legend()
+        plt.ylabel("log10(\u0394BIC)")
+        plt.xlabel("Cumulative probability")
+        plt.savefig(out_dir + '/' + 'deltaBIC_cdf.pdf')
 
-            self.final_df = self.sorted_df[0:int(len(y) * (1 - knee))]
-            self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
-            idx = self.final_df.index
-            best_ad = self.ad[idx]
-            best_dp = self.dp[idx]
+        self.final_df = self.sorted_df[0:int(len(y) * (1 - knee))]
+        self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
+        idx = self.final_df.index
+        best_ad = self.ad[idx]
+        best_dp = self.dp[idx]
 
-            print('Number of variants passing threshold: '  + str(len(best_ad)))
+        print('Number of variants passing threshold: '  + str(len(best_ad)))
 
         #fname = by + '_' + str(threshold) + '_'
 
         if self.variants is not None:
             best_vars = np.array(self.variants)[idx]
+            renamed_vars = []
+            for var in best_vars:
+                renamed_vars.append((var.split('_')[1] + var.split('_')[2] + '>' + var.split('_')[3]))
+
             with open(out_dir + '/' + 'passed_variant_names.txt', "w+") as var_file:
-                var_file.write('\n'.join(str(var) for var in best_vars))
+                var_file.write('\n'.join(str(var) for var in renamed_vars))
                 
-        if export_heatmap is True:
+        if export_heatmap:
             af = best_ad/best_dp
             #af = af.fillna(0)
             fig, ax = plt.subplots(figsize=(15,10))
@@ -273,7 +271,7 @@ class Mquad():
             plt.style.use('seaborn-dark')
             pal = sns.cubehelix_palette(start=2, rot=0, dark=0.4, light=1)
             if self.variants is not None:
-                sns.heatmap(af, cmap=pal, yticklabels=best_vars)
+                sns.heatmap(af, cmap=pal, yticklabels=renamed_vars)
             else:
                 sns.heatmap(af, cmap=pal)
             plt.savefig(out_dir + '/' + 'top variants heatmap.pdf')
@@ -287,16 +285,12 @@ class Mquad():
 
 if __name__ == '__main__':
     import vireoSNP
-    from vireoSNP.utils.io_utils import read_sparse_GeneINFO
-    from vireoSNP.utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
-
-    #test_ad = mmread("C:/Users/aaron/OneDrive/Documents/GitHub/vireo/data/mitoDNA/cellSNP.tag.AD.mtx")
-    #test_dp = mmread("C:/Users/aaron/OneDrive/Documents/GitHub/vireo/data/mitoDNA/cellSNP.tag.DP.mtx")
+    from vireoSNP.utils.vcf_utils import read_sparse_GeneINFO, load_VCF, write_VCF, parse_donor_GPb
     
-    cell_vcf = vireoSNP.load_VCF("C:/Users/aaronkwc/Documents/GitHub/MQuad/example/example.vcf.gz", biallelic_only=True)
+    cell_vcf = vireoSNP.load_VCF("C:/Users/aaron/OneDrive/Documents/GitHub/MQuad/example/example.vcf.gz", biallelic_only=True)
     cell_dat = vireoSNP.vcf.read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
     mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], variant_names= cell_vcf['variants'])
 
     #mdphd = MitoMut(AD = test_ad, DP = test_dp)
-    df = mdphd.fit_deltaBIC(out_dir='test', nproc=15)
-    mdphd.selectInformativeVariants(out_dir = 'test')
+    #df = mdphd.fit_deltaBIC(out_dir='test', nproc=15)
+    mdphd.selectInformativeVariants(out_dir = 'test', existing_df='test/debug_unsorted_BIC_params.csv')
