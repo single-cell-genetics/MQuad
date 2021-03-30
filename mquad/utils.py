@@ -24,7 +24,7 @@ def confusionMatrix(predicted_clone, real_label):
 
     return confusion_matrix
 
-def plot_confusionMatrix(mat, ax = ax, cmap = 'Blues'):
+def plot_confusionMatrix(mat, ax, cmap = 'Blues'):
 
     width, height = np.array(mat).shape
     text_colors = ['black', 'white']
