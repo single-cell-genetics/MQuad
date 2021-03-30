@@ -19,8 +19,8 @@ def confusionMatrix(predicted_clone, real_label):
     #proportion of cases correctly identified as belonging to class c among all cases that truly belong to class c
     recall = np.mean(confusion_matrix.max(axis=0)/confusion_matrix.sum(axis=0)) 
 
-    print('Precision = ' + precision)
-    print('Recall = ' + recall)
+    print('Precision = ' + str(precision))
+    print('Recall = ' + str(recall))
 
     return confusion_matrix
 
