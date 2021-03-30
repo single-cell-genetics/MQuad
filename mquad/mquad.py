@@ -17,7 +17,7 @@ import bbmix
 from bbmix.models import MixtureBinomial
 from bbmix.models import MixtureBetaBinomial
 import multiprocessing as mp
-from utils import findKnee
+from mquad_utils import findKnee
 
 
 class Mquad():
