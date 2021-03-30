@@ -32,7 +32,7 @@ def main():
         help=("The two mtx files for AD and DP matrices, comma separated"))
     parser.add_option("--vcfData", dest="vcf_data", default=None,
         help=("The cell genotype file in VCF format"))
-    group0.add_options("--BICparams", "--b", dest="BIC_params", default=None,
+    group0.add_option("--BICparams", "--b", dest="BIC_params", default=None,
         help=("Existing unsorted_debug_BIC_params.csv"))
     
     group1 = OptionGroup(parser, "Optional arguments")
