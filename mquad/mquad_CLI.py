@@ -32,6 +32,8 @@ def main():
         help=("The two mtx files for AD and DP matrices, comma separated"))
     parser.add_option("--vcfData", dest="vcf_data", default=None,
         help=("The cell genotype file in VCF format"))
+    group0.add_options("--BICparams", "--b", dest="BIC_params", default=None,
+        help=("Existing unsorted_debug_BIC_params.csv"))
     
     group1 = OptionGroup(parser, "Optional arguments")
     group1.add_option("--randSeed", type="int", dest="rand_seed", default=None,
@@ -102,24 +104,31 @@ def main():
     batch_size = options.batch_size
     
     ## Main functions
-    if options.batch_fit == 0:
+    if options.BIC_params is not None:
         mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
                         variant_names = cell_dat['variants'])
-        df = mdphd.fit_deltaBIC(out_dir = out_dir, nproc = nproc, minDP = minDP, beta_mode = False)
+        print("[MQuad] Using existing BIC params to filter variants only...")
+        best_ad, best_dp = mdphd.selectInformativeVariants(out_dir = out_dir, existing_df=options.BIC_params)
     else:
-        mdphd = MquadSparseMixBin(
-            AD=cell_dat['AD'], 
-            DP=cell_dat['DP'], 
-            variant_names=cell_dat['variants']
-        )
-        df = mdphd.fit_deltaBIC(
-            out_dir=out_dir,
-            minDP=minDP,
-            nproc=nproc,
-            batch_size=batch_size
-        )
-        
-    best_ad, best_dp = mdphd.selectInformativeVariants(out_dir = out_dir)
+        if options.batch_fit == 0:
+            mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
+                            variant_names = cell_dat['variants'])
+            df = mdphd.fit_deltaBIC(out_dir = out_dir, nproc = nproc, minDP = minDP, beta_mode = False)
+            best_ad, best_dp = mdphd.selectInformativeVariants(out_dir = out_dir)
+        else:
+            #use sparse mode for faster performance
+            mdphd = MquadSparseMixBin(
+                AD=cell_dat['AD'], 
+                DP=cell_dat['DP'], 
+                variant_names=cell_dat['variants']
+            )
+            df = mdphd.fit_deltaBIC(
+                out_dir=out_dir,
+                minDP=minDP,
+                nproc=nproc,
+                batch_size=batch_size
+            )
+            best_ad, best_dp = mdphd.selectInformativeVariants(out_dir = out_dir)
     
     run_time = time.time() - START_TIME
     print("[MQuad] All done: %d min %.1f sec" %(int(run_time / 60), 

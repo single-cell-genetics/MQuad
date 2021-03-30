@@ -1,11 +1,6 @@
-import os
-from os import path
-import sys
 import time
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from kneed import KneeLocator
 
 def confusionMatrix(predicted_clone, real_label):
@@ -48,3 +43,30 @@ def plot_confusionMatrix(mat, ax, cmap = 'Blues'):
                         verticalalignment='center', color=text_colors[int(norm_conf[x][y] > 0.5)])
 
     return res
+
+def checkValid():
+    pass
+
+def alleleFreqMatrix(AD, DP, fillna = True):
+    #takes sparse AD and DP, returns dense AF matrix for plotting
+    AD_df = pd.DataFrame(AD.todense())
+    DP_df = pd.DataFrame(DP.todense())
+    AF_df = AD_df/DP_df
+
+    if fillna:
+        AF_df = AF_df.fillna(0)
+
+    return AF_df
+
+def findKnee(BIC, sens=3):
+    #Wrapper function for knee point locator given a series of deltaBIC
+    over0 = BIC[BIC > 10]
+    y = np.log10(np.sort(over0.astype(float)))
+    x = np.linspace(0, 1, len(over0)+1)[1:]
+    kl = KneeLocator(x, y, curve="convex", direction="increasing", S=sens)
+    knee = kl.knee
+
+    return x,y,knee
+
+if __name__ == '__main__':
+    

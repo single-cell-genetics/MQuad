@@ -17,7 +17,7 @@ import bbmix
 from bbmix.models import MixtureBinomial
 from bbmix.models import MixtureBetaBinomial
 import multiprocessing as mp
-from kneed import KneeLocator
+from mquad.utils import *
 
 
 class Mquad():
@@ -165,9 +165,9 @@ class Mquad():
         print('CPUs used:', nproc)
         pool = mp.Pool(processes=nproc)
         results = []
-        t0=time.time()
+        #t0=time.time()
 
-        print("Initializing fit(mode: deltaBIC) on " + str(len(self.ad)) + " variants...")
+        print("[MQuad] Initializing fit(mode: deltaBIC) on " + str(len(self.ad)) + " variants...")
 
         for i in range(len(self.ad)):
             inputs = []
@@ -194,8 +194,8 @@ class Mquad():
                 for i in range(len(self.output_list)):
                     self.output_list[i].append(0)
 
-        t1 = time.time()
-        print("deltaBIC was calculated for " + str(len(self.ad)) + " variants and took:%.2f minutes" %((t1-t0)/60))
+        #t1 = time.time()
+        #print("[MQuad] DeltaBIC was calculated for " + str(len(self.ad)) + " variants and took:%.2f minutes" %((t1-t0)/60))
 
         self.df = pd.DataFrame(data=self.output_list)
         self.df = self.df.transpose()
@@ -216,11 +216,15 @@ class Mquad():
         #return df of all metrics
         return self.df
 
-    def selectInformativeVariants(self, min_cells=2, export_heatmap=True, export_mtx=True, out_dir=None):
+    def selectInformativeVariants(self, min_cells=2, export_heatmap=True, export_mtx=True, out_dir=None, existing_df=None):
         #takes self.df, return best_ad and best_dp as array
 
         if self.df is None:
-            print('fitted model not found! Have you run fit_deltaBIC/fit_logLik yet?')
+            if existing_df is not None:
+                #input /path/to/unsorted_debug_BIC_params.csv for existing df if model is already fit
+                self.df = pd.read_csv(existing_df)
+            else:
+                print('fitted model not found! Have you run fit_deltaBIC/fit_logLik yet?')
         else:
             if out_dir is not None:
                 if path.exists(out_dir) is not True:
@@ -231,20 +235,22 @@ class Mquad():
             else:
                 print('Out directory already exists, overwriting content inside...')
 
-            over0 = self.df.deltaBIC[self.df.deltaBIC > 10]
-            y = np.log10(np.sort(over0.astype(float)))
-            x = np.linspace(0, 1, len(over0)+1)[1:]
-
-            kl = KneeLocator(x, y, curve="convex", direction="increasing", S=3)
+            #delete after making sure utils work
+            #over0 = self.df.deltaBIC[self.df.deltaBIC > 10]
+            #y = np.log10(np.sort(over0.astype(float)))
+            #x = np.linspace(0, 1, len(over0)+1)[1:]
+            #kl = KneeLocator(x, y, curve="convex", direction="increasing", S=3)
             #print(kl.knee)
+
+            x,y,knee = findKnee(self.df.deltaBIC)
             plt.plot(x, y)
-            plt.axvline(x=kl.knee, color="black", linestyle='--',label="cutoff")
+            plt.axvline(x=knee, color="black", linestyle='--',label="cutoff")
             plt.legend()
             plt.ylabel("log10(\u0394BIC)")
             plt.xlabel("Cumulative probability")
             plt.savefig(out_dir + '/' + 'deltaBIC_cdf.pdf')
 
-            self.final_df = self.sorted_df[0:int(len(y) * (1 - kl.knee))]
+            self.final_df = self.sorted_df[0:int(len(y) * (1 - knee))]
             self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
             idx = self.final_df.index
             best_ad = self.ad[idx]
@@ -265,10 +271,11 @@ class Mquad():
             fig, ax = plt.subplots(figsize=(15,10))
             plt.title("Allele frequency of top variants")
             plt.style.use('seaborn-dark')
+            pal = sns.cubehelix_palette(start=2, rot=0, dark=0.4, light=1)
             if self.variants is not None:
-                sns.heatmap(af, cmap='terrain_r', yticklabels=best_vars)
+                sns.heatmap(af, cmap=pal, yticklabels=best_vars)
             else:
-                sns.heatmap(af, cmap='terrain_r')
+                sns.heatmap(af, cmap=pal)
             plt.savefig(out_dir + '/' + 'top variants heatmap.pdf')
 
         #export ad dp mtx out for vireo
@@ -277,12 +284,6 @@ class Mquad():
             mmwrite(out_dir + '/' + 'passed_dp.mtx', sparse.csr_matrix(best_dp))
 
         return best_ad, best_dp
-
-    def readParams(self, file):
-        self.df = pd.read_csv(file)
-        self.sorted_df = self.df.sort_values(by=['deltaBIC'], ascending=False)
-
-        return self.df, self.sorted_df
 
 if __name__ == '__main__':
     import vireoSNP
