@@ -17,6 +17,8 @@ A recommended pipeline to generate the neccessary files:
 
 Different upstream/downstream packages can also be used if the neccesary file formats are available.
 
+If you are too lazy to dig into cellSNP's usage, a preprocessing_cmds.sh is also available in the examples folder which shows the shell commands for cellSNP. (With more updates coming)
+
 Installation
 ============
 
