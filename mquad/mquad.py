@@ -216,7 +216,7 @@ class Mquad():
         #return df of all metrics
         return self.df
 
-    def selectInformativeVariants(self, min_cells=2, export_heatmap=True, export_mtx=True, out_dir=None, existing_df=None):
+    def selectInformativeVariants(self, min_cells=2, export_heatmap=True, export_mtx=True, out_dir=None, existing_df=None, tenx_cutoff=None):
         #takes self.df, return best_ad and best_dp as array
 
         if existing_df is not None:
@@ -236,16 +236,23 @@ class Mquad():
         else:
             print('Out directory already exists, overwriting content inside...')
 
-        x,y,knee = findKnee(self.df.deltaBIC)
-        plt.plot(x, y)
-        plt.axvline(x=knee, color="black", linestyle='--',label="cutoff")
-        plt.legend()
-        plt.ylabel("log10(\u0394BIC)")
-        plt.xlabel("Cumulative probability")
-        plt.savefig(out_dir + '/' + 'deltaBIC_cdf.pdf')
+        if tenx_cutoff is None:
+            x,y,knee = findKnee(self.df.deltaBIC)
+            plt.plot(x, y)
+            plt.axvline(x=knee, color="black", linestyle='--',label="cutoff")
+            plt.legend()
+            plt.ylabel("log10(\u0394BIC)")
+            plt.xlabel("Cumulative probability")
+            plt.savefig(out_dir + '/' + 'deltaBIC_cdf.pdf')
 
-        self.final_df = self.sorted_df[0:int(len(y) * (1 - knee))]
-        self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
+            self.final_df = self.sorted_df[0:int(len(y) * (1 - knee))]
+            self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
+
+        else:
+            self.final_df = self.sorted_df[self.sorted_df.deltaBIC >= tenx_cutoff]
+            self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
+
+
         idx = self.final_df.index
         best_ad = self.ad[idx]
         best_dp = self.dp[idx]

@@ -68,5 +68,21 @@ def findKnee(BIC, sens=3):
 
     return x,y,knee
 
+def quickStats(a, d):
+    #Wrapper function for calculating basic stats in AD and DP
+
+    #Total DP across all cells
+    total_DP = np.sum(d)
+    #Median DP across all cells
+    median_DP = np.median(d)
+    #Total AD across all cells
+    total_AD = np.sum(a)
+    #Median AD across all cells
+    median_AD = np.median(a)
+    #How many cells have this variant?
+    non_zero = np.count_nonzero(a)
+
+    return total_DP, median_DP, total_AD, median_AD, non_zero
+    
 if __name__ == '__main__':
     pass

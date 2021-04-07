@@ -34,7 +34,9 @@ def main():
         help=("The cell genotype file in VCF format"))
     group0.add_option("--BICparams", "--b", dest="BIC_params", default=None,
         help=("Existing unsorted_debug_BIC_params.csv"))
-    
+    group0.add_option("--tenx", "--t", dest="cutoff", default=None,
+        help=("User-defined deltaBIC cutoff mainly for low-depth data"))
+
     group1 = OptionGroup(parser, "Optional arguments")
     group1.add_option("--randSeed", type="int", dest="rand_seed", default=None,
         help="Seed for random initialization [default: %default]")
@@ -102,13 +104,14 @@ def main():
     nproc = options.nproc
     minDP = options.minDP
     batch_size = options.batch_size
+    cutoff = options.cutoff
     
     ## Main functions
     if options.BIC_params is not None:
         mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
                         variant_names = cell_dat['variants'])
         print("[MQuad] Using existing BIC params to filter variants only...")
-        best_ad, best_dp = mdphd.selectInformativeVariants(out_dir = out_dir, existing_df=options.BIC_params)
+        best_ad, best_dp = mdphd.selectInformativeVariants(out_dir = out_dir, existing_df=options.BIC_params, tenx_cutoff=cutoff)
     else:
         if options.batch_fit == 0:
             mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
