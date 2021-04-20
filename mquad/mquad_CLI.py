@@ -44,6 +44,8 @@ def main():
         help="Number of subprocesses [default: %default]")
     group1.add_option("--minDP", type="int", dest="minDP", default=10, 
         help="Minimum DP to include for modelling [default: 10]")
+    group1.add_option("--minCell", type='int', dest="minCell", default=2,
+        help=("Minimum no. of cells in minor component [default: 2]"))
     group1.add_option("--batchFit", type='int', dest="batch_fit", default=0,
         help=("1 if fit MixBin model using batch mode, 0 else [default: 0]"))
     group1.add_option("--batchSize", type='int', dest="batch_size", default=128,
@@ -105,19 +107,20 @@ def main():
     minDP = options.minDP
     batch_size = options.batch_size
     cutoff = options.cutoff
+    minCell = options.minCell
     
     ## Main functions
     if options.BIC_params is not None:
         mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
                         variant_names = cell_dat['variants'])
         print("[MQuad] Using existing BIC params to filter variants only...")
-        best_ad, best_dp = mdphd.selectInformativeVariants(out_dir = out_dir, existing_df=options.BIC_params, tenx_cutoff=cutoff)
+        best_ad, best_dp = mdphd.selectInformativeVariants(min_cells = minCell, out_dir = out_dir, existing_df=options.BIC_params, tenx_cutoff=cutoff)
     else:
         if options.batch_fit == 0:
             mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
                             variant_names = cell_dat['variants'])
             df = mdphd.fit_deltaBIC(out_dir = out_dir, nproc = nproc, minDP = minDP, beta_mode = False)
-            best_ad, best_dp = mdphd.selectInformativeVariants(out_dir = out_dir)
+            best_ad, best_dp = mdphd.selectInformativeVariants(min_cells = minCell, out_dir = out_dir)
         else:
             #use sparse mode for faster performance
             mdphd = MquadSparseMixBin(
@@ -131,7 +134,7 @@ def main():
                 nproc=nproc,
                 batch_size=batch_size
             )
-            best_ad, best_dp = mdphd.selectInformativeVariants(out_dir = out_dir)
+            best_ad, best_dp = mdphd.selectInformativeVariants(min_cells = minCell, out_dir = out_dir)
     
     run_time = time.time() - START_TIME
     print("[MQuad] All done: %d min %.1f sec" %(int(run_time / 60), 

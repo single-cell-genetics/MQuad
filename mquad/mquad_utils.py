@@ -44,7 +44,14 @@ def plot_confusionMatrix(mat, ax, cmap = 'Blues'):
 
     return res
 
+def readFasta(fname):
+    fa = open(fname).read()
+    new_fa = ''.join(x for x in fa if not x.islower())
+    print(len(new_fa))
+
 def checkValid():
+    #read in MT fasta
+    #check if ref and alt reversed
     pass
 
 def alleleFreqMatrix(AD, DP, fillna = True):
@@ -68,21 +75,21 @@ def findKnee(BIC, sens=3):
 
     return x,y,knee
 
-def quickStats(a, d):
+def quickStats(AD, DP):
     #Wrapper function for calculating basic stats in AD and DP
 
     #Total DP across all cells
-    total_DP = np.sum(d)
+    total_DP = np.sum(DP)
     #Median DP across all cells
-    median_DP = np.median(d)
+    median_DP = np.median(DP)
     #Total AD across all cells
-    total_AD = np.sum(a)
+    total_AD = np.sum(AD)
     #Median AD across all cells
-    median_AD = np.median(a)
+    median_AD = np.median(AD)
     #How many cells have this variant?
-    non_zero = np.count_nonzero(a)
+    non_zero = np.count_nonzero(AD)
 
     return total_DP, median_DP, total_AD, median_AD, non_zero
-    
+
 if __name__ == '__main__':
-    pass
+    readFasta('/home/aaronkwc/MQuad/mquad/hg19_chrM.fasta.txt')
