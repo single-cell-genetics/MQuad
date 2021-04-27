@@ -34,6 +34,8 @@ Alternatively, you can install from this GitHub repository for latest (often dev
 
   pip install -U git+https://github.com/single-cell-genetics/MQuad
 
+Installation time: < 1 min
+
 Manual
 ======
 
@@ -99,6 +101,8 @@ The output files should include:
     
 * BIC_params.csv: A spreadsheet containing detailed parameters/statistics of all variants, sorted from highest deltaBIC to lowest
 * debug_unsorted_BIC_params.csv: Same spreadsheet as BIC_params.csv but unsorted, for developers' debugging purpose, will probably be removed on later versions of MQuad
+
+Typical run time: ~10 seconds
 
 Column description for BIC_params.csv:
 
