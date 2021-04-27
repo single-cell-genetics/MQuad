@@ -19,6 +19,14 @@ Different upstream/downstream packages can also be used if the neccesary file fo
 
 If you are too lazy to dig into cellSNP's usage, a preprocessing_cmds.sh is also available in the examples folder which shows the shell commands for cellSNP. (With more updates coming)
 
+OS requirements
+===============
+
+This package has been tested on the following systems:
+
+* Windows: Windows 10
+* Linux: CentOS Linux 7 (Core)
+
 Installation
 ============
 
