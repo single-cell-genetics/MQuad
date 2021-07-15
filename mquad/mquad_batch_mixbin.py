@@ -195,9 +195,9 @@ class MquadSparseMixBin():
             plt.title("Allele frequency of top variants")
             plt.style.use('seaborn-dark')
             if self.variants is not None:
-                sns.heatmap(af, cmap='terrain_r', yticklabels=best_vars)
+                sns.heatmap(af, cmap='Greens', yticklabels=best_vars)
             else:
-                sns.heatmap(af, cmap='terrain_r')
+                sns.heatmap(af, cmap='Greens')
             plt.savefig(out_dir + '/' + 'top variants heatmap.pdf')
 
         #export ad dp mtx out for vireo
