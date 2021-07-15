@@ -120,7 +120,7 @@ def main():
             mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
                             variant_names = cell_dat['variants'])
             df = mdphd.fit_deltaBIC(out_dir = out_dir, nproc = nproc, minDP = minDP, beta_mode = False)
-            best_ad, best_dp = mdphd.selectInformativeVariants(min_cells = minCell, out_dir = out_dir)
+            best_ad, best_dp = mdphd.selectInformativeVariants(min_cells = minCell, out_dir = out_dir, tenx_cutoff=cutoff)
         else:
             #use sparse mode for faster performance
             mdphd = MquadSparseMixBin(

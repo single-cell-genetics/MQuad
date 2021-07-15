@@ -156,6 +156,8 @@ class MquadSparseMixBin():
             else:
                 print('Out directory already exists, overwriting content inside...')
 
+            #self.filt_df = self.sorted_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
+
             over0 = self.df.deltaBIC[self.df.deltaBIC > 10]
             y = np.log10(np.sort(over0.astype(float)))
             x = np.linspace(0, 1, len(over0)+1)[1:]
@@ -180,7 +182,8 @@ class MquadSparseMixBin():
         #fname = by + '_' + str(threshold) + '_'
 
         if self.variants is not None:
-            best_vars = np.array(self.variants)[idx]
+            #best_vars = np.array(self.variants)[idx]
+            best_vars = self.final_df['variant_name']
             var_file = open(out_dir + '/' + 'passed_variant_names.txt', "w+")
             var_file.write(str(best_vars))
             var_file.close()

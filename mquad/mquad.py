@@ -221,22 +221,22 @@ class Mquad():
 
         if existing_df is not None:
             #input /path/to/unsorted_debug_BIC_params.csv for existing df if model is already fit
+            print('[MQuad] Fitted model detected, using' + existing_df + '...')
             self.df = pd.read_csv(existing_df)
             self.sorted_df = self.df.sort_values(by=['deltaBIC'], ascending=False)
-
-        else:
-            print('fitted model not found! Have you run fit_deltaBIC/fit_logLik yet?')
 
         if out_dir is not None:
             if path.exists(out_dir) is not True:
                 try:
                     os.mkdir(out_dir)
                 except:
-                    print("Can't make directory, do you have permission?")
+                    print("[MQuad] Can't make directory, do you have permission?")
         else:
-            print('Out directory already exists, overwriting content inside...')
+            print('[MQuad] Out directory already exists, overwriting content inside...')
 
         if tenx_cutoff is None:
+            print('[MQuad] Finding knee point for deltaBIC cutoff...')
+            #self.filt_df = self.sorted_df[self.sorted_df.deltaBIC >= 10]
             x,y,knee = findKnee(self.df.deltaBIC)
             plt.plot(x, y)
             plt.axvline(x=knee, color="black", linestyle='--',label="cutoff")
@@ -249,7 +249,8 @@ class Mquad():
             self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
 
         else:
-            self.final_df = self.sorted_df[self.sorted_df.deltaBIC >= tenx_cutoff]
+            print('[MQuad] Tenx mode used with cutoff = ' + str(tenx_cutoff))
+            self.final_df = self.sorted_df[self.sorted_df.deltaBIC >= float(tenx_cutoff)]
             self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
 
 
@@ -300,6 +301,5 @@ if __name__ == '__main__':
     cell_dat = vireoSNP.vcf.read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
     mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], variant_names= cell_vcf['variants'])
 
-    #mdphd = MitoMut(AD = test_ad, DP = test_dp)
-    #df = mdphd.fit_deltaBIC(out_dir='test', nproc=15)
-    mdphd.selectInformativeVariants(out_dir = 'test', existing_df='test/debug_unsorted_BIC_params.csv')
+    df = mdphd.fit_deltaBIC(out_dir='test', nproc=15)
+    mdphd.selectInformativeVariants(out_dir = 'test', tenx_cutoff=10)
