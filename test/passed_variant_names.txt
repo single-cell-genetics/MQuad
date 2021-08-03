@@ -10,6 +10,8 @@
 509    chrM_12062_C_T
 114     chrM_2113_C_T
 113     chrM_2112_A_G
+115     chrM_2114_A_T
 112     chrM_2111_A_T
 132     chrM_2131_G_A
+336     chrM_2335_G_C
 Name: variant_name, dtype: object

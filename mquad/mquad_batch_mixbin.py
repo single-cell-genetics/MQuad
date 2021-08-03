@@ -186,6 +186,7 @@ class MquadSparseMixBin():
 
             print('Number of variants passing threshold: '  + str(best_ad.shape[0]))
 
+        self.sorted_df.to_csv(out_dir + '/new_BIC_params.csv', index=False)
         #fname = by + '_' + str(threshold) + '_'
 
         if self.variants is not None:
