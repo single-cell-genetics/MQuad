@@ -75,21 +75,5 @@ def findKnee(BIC, sens=3):
 
     return x,y,knee
 
-def quickStats(AD, DP):
-    #Wrapper function for calculating basic stats in AD and DP
-
-    #Total DP across all cells
-    total_DP = np.sum(DP)
-    #Median DP across all cells
-    median_DP = np.median(DP)
-    #Total AD across all cells
-    total_AD = np.sum(AD)
-    #Median AD across all cells
-    median_AD = np.median(AD)
-    #How many cells have this variant?
-    non_zero = np.count_nonzero(AD)
-
-    return total_DP, median_DP, total_AD, median_AD, non_zero
-
 if __name__ == '__main__':
     readFasta('/home/aaronkwc/MQuad/mquad/hg19_chrM.fasta.txt')

@@ -19,7 +19,7 @@ from bbmix.models import MixtureBinomialSparseBatch
 from kneed import KneeLocator
 from collections import Counter
 import vireoSNP
-
+from mquad_utils import findKnee
 
 class MquadSparseMixBin():
     def __init__(self, AD, DP, variant_names=None, dataset_name=None):
@@ -94,8 +94,8 @@ class MquadSparseMixBin():
         adj_bs = min(n_variants // nproc, batch_size)
         print('CPUs used: {}, batch size: {} {}'.format(nproc, 
                                                         adj_bs, 
-                                                        "" if adj_bs == batch_size else "(adjusted to avoid idol processes)"))
-        print("Sparse mode start fitting...")
+                                                        "" if adj_bs == batch_size else "(adjusted to avoid idle processes)"))
+        print("Fitting in sparse mode...")
         t0=time.time()
 
         print("Initializing fit(mode: deltaBIC) on " + str(self.ad.shape[0]) + " variants...")
@@ -129,6 +129,7 @@ class MquadSparseMixBin():
         if self.variants is not None:
             self._addVariantNames(valid_rows)
 
+        #sort df but keep index
         self.sorted_df = self.df.sort_values(by=['deltaBIC'], ascending=False)
 
         if export_csv is True:
@@ -156,24 +157,30 @@ class MquadSparseMixBin():
             else:
                 print('Out directory already exists, overwriting content inside...')
 
-            #self.filt_df = self.sorted_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
-
-            over0 = self.df.deltaBIC[self.df.deltaBIC > 10]
-            y = np.log10(np.sort(over0.astype(float)))
-            x = np.linspace(0, 1, len(over0)+1)[1:]
-
-            kl = KneeLocator(x, y, curve="convex", direction="increasing", S=3)
-            #print(kl.knee)
+            x, y, knee = findKnee(self.df.deltaBIC)
+            
             plt.plot(x, y)
-            plt.axvline(x=kl.knee, color="black", linestyle='--',label="cutoff")
+            plt.axvline(x=knee, color="black", linestyle='--',label="cutoff")
             plt.legend()
             plt.ylabel("log10(\u0394BIC)")
             plt.xlabel("Cumulative probability")
-            plt.savefig(out_dir + '/' + 'deltaBIC_cdf.pdf')
+            plt.savefig(out_dir + '/deltaBIC_cdf.pdf')
 
-            self.final_df = self.sorted_df[0:int(len(y) * (1 - kl.knee))]
-            self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
+            #make a PASS/FAIL column in self.df for easier subsetting
+            max_rank = int(len(y) * (1 - knee))
+            print(max_rank)
+            self.sorted_df['PASS_KP'] = [True] * max_rank + [False] * (len(self.sorted_df) - max_rank)
+            self.sorted_df['PASS_MINCELLS'] = self.sorted_df.num_cells_minor_cpt.apply(lambda x: True if x >= min_cells else False)
+
+            self.final_df = self.sorted_df[(self.sorted_df.PASS_KP == True) & (self.sorted_df.PASS_MINCELLS == True)]
+            #print(self.final_df.head())
+            
+            #will deprecate in later versions
+            #self.final_df = self.sorted_df[0:int(len(y) * (1 - knee))]
+            #self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
+
             idx = self.final_df.index
+            #print(idx)
             best_ad = self.ad[idx]
             best_dp = self.dp[idx]
 
@@ -184,7 +191,7 @@ class MquadSparseMixBin():
         if self.variants is not None:
             #best_vars = np.array(self.variants)[idx]
             best_vars = self.final_df['variant_name']
-            var_file = open(out_dir + '/' + 'passed_variant_names.txt', "w+")
+            var_file = open(out_dir + '/passed_variant_names.txt', "w+")
             var_file.write(str(best_vars))
             var_file.close()
                 
@@ -198,12 +205,12 @@ class MquadSparseMixBin():
                 sns.heatmap(af, cmap='Greens', yticklabels=best_vars)
             else:
                 sns.heatmap(af, cmap='Greens')
-            plt.savefig(out_dir + '/' + 'top variants heatmap.pdf')
+            plt.savefig(out_dir + '/top variants heatmap.pdf')
 
         #export ad dp mtx out for vireo
         if export_mtx is True:
-            mmwrite(out_dir + '/' + 'passed_ad.mtx', sparse.csr_matrix(best_ad))
-            mmwrite(out_dir + '/' + 'passed_dp.mtx', sparse.csr_matrix(best_dp))
+            mmwrite(out_dir + '/passed_ad.mtx', sparse.csr_matrix(best_ad))
+            mmwrite(out_dir + '/passed_dp.mtx', sparse.csr_matrix(best_dp))
 
         return best_ad, best_dp
 
@@ -303,13 +310,10 @@ def basicStats(valid_ad, valid_dp, valid_row_sizes):
 if __name__ == '__main__':
     from vireoSNP.utils.io_utils import read_sparse_GeneINFO
     from vireoSNP.utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
-
-    #test_ad = mmread("C:/Users/aaron/OneDrive/Documents/GitHub/vireo/data/mitoDNA/cellSNP.tag.AD.mtx")
-    #test_dp = mmread("C:/Users/aaron/OneDrive/Documents/GitHub/vireo/data/mitoDNA/cellSNP.tag.DP.mtx")
     
-    cell_vcf = vireoSNP.load_VCF("../example/example.vcf.gz", biallelic_only=True)
+    cell_vcf = vireoSNP.load_VCF("example/example.vcf.gz", biallelic_only=True)
     cell_dat = vireoSNP.vcf.read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
-    mdphd = MquadSparseMixBin(AD = cell_dat['AD'], DP = cell_dat['DP'], variant_names= cell_dat['variants'])
+    mdphd = MquadSparseMixBin(AD = cell_dat['AD'], DP = cell_dat['DP'], variant_names= cell_vcf['variants'])
 
     df = mdphd.fit_deltaBIC(out_dir='test')
     mdphd.selectInformativeVariants(out_dir = 'test')
