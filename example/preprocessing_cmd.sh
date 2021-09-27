@@ -3,25 +3,22 @@
 ### SMART-SEQ2 ####
 #for sequencing data with individual .bam files for each cell + no UMItags/barcodes
 
-#first use mode2 on a merged bulk .bam
+#run cellsnp-lite mode2a on bam list
+#change --chrom= to whatever reference genome you aligned to - in this case we use hg19
 ls *.bam > bam.lst
-samtools merge -b bam.lst out.bam
-samtools index out.bam
-
-#generate .vcf file for all cells in bulk
-cellsnp-lite -s out.bam -o mode2 --chrom=MT --UMItag None --minMAF 0 --minCOUNT 0 --genotype --gzip -p 10
-
-#pileup for each cell with the previous bulk .vcf as input
-cellsnp-lite -S bam.lst -I bam.lst -o mode3 -R mode2/cellSNP.cells.vcf.gz --UMItag None --genotype --gzip -p 10
+cellsnp-lite -S bam.lst -i bam.lst -o cellsnp --UMItag None --genotype --gzip --chrom=chrM -p 10
 
 
 ### 10X/UMI-BASED ###
 #for 10x and UMI-based sequencing data where there is only 1 big .bam + barcodes
 
-#run mode2 on the .bam directly
-cellsnp-lite -s possorted_genome.bam -b barcodes.tsv -o mode2 --chrom=MT --UMItag Auto --minMAF 0 --minCOUNT 0 --genotype --gzip -p 10
+#run cellsnp-lite on the .bam directly
+#change --chrom= to whatever reference genome you aligned to, in most cases 10x data are aligned to GrCh38 so the chr name is MT
+cellsnp-lite -s possorted_genome.bam -b barcodes.tsv -o cellsnp --chrom=MT --UMItag Auto --minMAF 0 --minCOUNT 0 --genotype --gzip -p 10
 
 
 #The above steps should generate a cell x snp .vcf file (cellSNP.cells.vcf.gz), or AD/DP sparse matrices if you did not use the --genotype option
+
+#Then you should be able to run MQuad on the vcf file 
 
 #More tutorials and updates coming...
