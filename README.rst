@@ -95,17 +95,17 @@ The output files should include:
 * passed_ad.mtx, passed_dp.mtx: Sparse matrix files of the AD/DP of qualified variants for downstream clonal analysis
 * top variants heatmap.pdf: Heatmap of the allele frequency of qualified variants
 
-.. image:: images/top_var_heatmap.png
-    :width: 100px
+.. image:: images/top_variants_heatmap.png
+    :width: 600px
     :align: center
-    :height: 50px
+    :height: 400px
     
 * deltaBIC_cdf.pdf: A cdf plot of deltaBIC distribution of all variants, including the cutoff determined by MQuad
 
-.. image:: images/cdf.png
-    :width: 100px
+.. image:: images/deltaBIC_cdf.png
+    :width: 600px
     :align: center
-    :height: 50px
+    :height: 400px
     
 * BIC_params.csv: A spreadsheet containing detailed parameters/statistics of all variants, sorted from highest deltaBIC to lowest
 * debug_unsorted_BIC_params.csv: Same spreadsheet as BIC_params.csv but unsorted, for developers' debugging purpose, will probably be removed on later versions of MQuad
