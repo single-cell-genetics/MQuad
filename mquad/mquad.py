@@ -237,15 +237,15 @@ class Mquad():
         if tenx_cutoff is None:
             print('[MQuad] Finding knee point for deltaBIC cutoff...')
             #self.filt_df = self.sorted_df[self.sorted_df.deltaBIC >= 10]
-            x,y,knee = findKnee(self.df.deltaBIC)
+            x,y,knee_x, knee_y = findKnee(self.df.deltaBIC)
             plt.plot(x, y)
-            plt.axvline(x=knee, color="black", linestyle='--',label="cutoff")
+            plt.axvline(x=knee_x, color="black", linestyle='--',label="cutoff")
             plt.legend()
             plt.ylabel("log10(\u0394BIC)")
             plt.xlabel("Cumulative probability")
             plt.savefig(out_dir + '/' + 'deltaBIC_cdf.pdf')
 
-            self.final_df = self.sorted_df[0:int(len(y) * (1 - knee))]
+            self.final_df = self.sorted_df[0:int(len(y) * (1 - knee_x))]
             self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
 
         else:

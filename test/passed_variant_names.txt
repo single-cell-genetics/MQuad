@@ -1,17 +1,11 @@
-502     chrM_2956_C_A
-505     chrM_8003_C_T
-504     chrM_7790_G_C
-506     chrM_9628_G_A
-1       chrM_1984_G_A
-507    chrM_11185_G_A
-508    chrM_11285_C_T
-0        chrM_879_G_A
-503     chrM_4114_G_A
-509    chrM_12062_C_T
-114     chrM_2113_C_T
-113     chrM_2112_A_G
-115     chrM_2114_A_T
-112     chrM_2111_A_T
-132     chrM_2131_G_A
-336     chrM_2335_G_C
-Name: variant_name, dtype: object
+2956C>A
+8003C>T
+7790G>C
+9628G>A
+1984G>A
+11185G>A
+11285C>T
+879G>A
+4114G>A
+12062C>T
+2112A>G

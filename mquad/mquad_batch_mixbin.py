@@ -19,7 +19,7 @@ from bbmix.models import MixtureBinomialSparseBatch
 from kneed import KneeLocator
 from collections import Counter
 import vireoSNP
-from mquad_utils import findKnee
+from .mquad_utils import findKnee
 
 class MquadSparseMixBin():
     def __init__(self, AD, DP, variant_names=None, dataset_name=None):
@@ -31,7 +31,7 @@ class MquadSparseMixBin():
         if AD.shape[0] != DP.shape[0]:
             print('AD and DP length do not match!')
         else:
-            print(str(AD.shape[0]) + ' variants detected')
+            print(str(AD.shape[0]) + ' variants detected...')
 
         if variant_names is not None:
             #sanity check for length of variant names
@@ -39,7 +39,7 @@ class MquadSparseMixBin():
                 print('No. of variant names does not match length of AD!')
             else:
                 self.variants = variant_names
-                print("variant names detected") 
+                print("Variant names detected...") 
             
         else:
             self.variants = None
@@ -85,6 +85,29 @@ class MquadSparseMixBin():
             yield (_ad, _dp, _row_sizes)
         assert(item_start == x.shape[0])
             
+    def validateSNP(self, SNP_names):
+        ##input a list of SNP_names
+        ##if the SNP has wrong reference, flag it
+
+        ##read in ref vcf
+        cell_vcf = vireoSNP.load_VCF("/home/aaronkwc/data/reproduced_results/cellsnp_ref/cellSNP.cells.vcf.gz", biallelic_only=True)
+        variants=pd.Series(cell_vcf['variants'])
+        df = pd.DataFrame(variants, columns=['variants'])
+        df[['chr', 'pos', 'ref','alt']] = df['variants'].str.split('_', expand=True)
+        #print(df.head())
+
+        boo = []
+
+        for name in SNP_names:
+            pos, ref = name.split('_')[1], name.split('_')[2]
+            #given a pos, find the ref and check if its correct
+            #print(df.ref[df.pos == pos].values)
+            if ((df.ref[df.pos == pos].values[0]) == ref) is True:
+                boo.append(True)
+            else:
+                boo.append(False)
+
+        return boo
 
     def fit_deltaBIC(self, out_dir, minDP=10, minAD=1, export_csv=True, nproc=30, batch_size=128):
         #here we fit and choose model based on deltaBIC
@@ -146,7 +169,7 @@ class MquadSparseMixBin():
         #takes self.df, return best_ad and best_dp as array
 
         if self.df is None:
-            print('fitted model not found! Have you run fit_deltaBIC/fit_logLik yet?')
+            print('Fitted model not found! Have you run fit_deltaBIC/fit_logLik yet?')
         else:
             if out_dir is not None:
                 if path.exists(out_dir) is not True:
@@ -157,19 +180,19 @@ class MquadSparseMixBin():
             else:
                 print('Out directory already exists, overwriting content inside...')
 
-            x, y, knee = findKnee(self.df.deltaBIC)
+            x, y, knee, cutoff = findKnee(self.df.deltaBIC)
             
             plt.plot(x, y)
             plt.axvline(x=knee, color="black", linestyle='--',label="cutoff")
             plt.legend()
-            plt.ylabel("log10(\u0394BIC)")
+            plt.ylabel("\u0394BIC")
             plt.xlabel("Cumulative probability")
             plt.savefig(out_dir + '/deltaBIC_cdf.pdf')
 
             #make a PASS/FAIL column in self.df for easier subsetting
-            max_rank = int(len(y) * (1 - knee))
-            print(max_rank)
-            self.sorted_df['PASS_KP'] = [True] * max_rank + [False] * (len(self.sorted_df) - max_rank)
+            print(cutoff)
+            #self.sorted_df['VALID'] = self.validateSNP(self.sorted_df.variant_name)
+            self.sorted_df['PASS_KP'] = self.sorted_df.deltaBIC.apply(lambda x: True if x >= cutoff else False)
             self.sorted_df['PASS_MINCELLS'] = self.sorted_df.num_cells_minor_cpt.apply(lambda x: True if x >= min_cells else False)
 
             self.final_df = self.sorted_df[(self.sorted_df.PASS_KP == True) & (self.sorted_df.PASS_MINCELLS == True)]
@@ -179,31 +202,39 @@ class MquadSparseMixBin():
             #self.final_df = self.sorted_df[0:int(len(y) * (1 - knee))]
             #self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
 
-            idx = self.final_df.index
-            #print(idx)
-            best_ad = self.ad[idx]
-            best_dp = self.dp[idx]
+            print('Number of variants passing threshold: '  + str(len(self.final_df['variant_name'])))
 
-            print('Number of variants passing threshold: '  + str(best_ad.shape[0]))
+            if len(self.final_df['variant_name']) != 0:
+                passed_variants = self.final_df['variant_name']
+                idx = [self.variants.index(i) for i in passed_variants]
+        
+                best_ad = self.ad[idx]
+                best_dp = self.dp[idx]
+            else:
+                print("No informative variants detected! If you are using 10x data, try setting --minDP to a smaller number.")
 
-        self.sorted_df.to_csv(out_dir + '/new_BIC_params.csv', index=False)
+
+        self.sorted_df.to_csv(out_dir + '/BIC_params.csv', index=False)
         #fname = by + '_' + str(threshold) + '_'
 
         if self.variants is not None:
             #best_vars = np.array(self.variants)[idx]
-            best_vars = self.final_df['variant_name']
-            var_file = open(out_dir + '/passed_variant_names.txt', "w+")
-            var_file.write(str(best_vars))
-            var_file.close()
+            renamed_vars = []
+            for var in passed_variants:
+                renamed_vars.append((var.split('_')[1] + var.split('_')[2] + '>' + var.split('_')[3]))
+
+            with open(out_dir + '/passed_variant_names.txt', "w+") as var_file:
+                var_file.write('\n'.join(str(var) for var in renamed_vars))
                 
         if export_heatmap is True:
             af = best_ad/best_dp
+            #print(af.shape)
             #af = af.fillna(0)
             fig, ax = plt.subplots(figsize=(15,10))
             plt.title("Allele frequency of top variants")
             plt.style.use('seaborn-dark')
             if self.variants is not None:
-                sns.heatmap(af, cmap='Greens', yticklabels=best_vars)
+                sns.heatmap(af, cmap='Greens', yticklabels=renamed_vars)
             else:
                 sns.heatmap(af, cmap='Greens')
             plt.savefig(out_dir + '/top variants heatmap.pdf')
@@ -309,6 +340,7 @@ def basicStats(valid_ad, valid_dp, valid_row_sizes):
            }    
 
 if __name__ == '__main__':
+    import vireoSNP
     from vireoSNP.utils.io_utils import read_sparse_GeneINFO
     from vireoSNP.utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
     
@@ -316,5 +348,5 @@ if __name__ == '__main__':
     cell_dat = vireoSNP.vcf.read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
     mdphd = MquadSparseMixBin(AD = cell_dat['AD'], DP = cell_dat['DP'], variant_names= cell_vcf['variants'])
 
-    df = mdphd.fit_deltaBIC(out_dir='test')
+    df = mdphd.fit_deltaBIC(out_dir='test') 
     mdphd.selectInformativeVariants(out_dir = 'test')

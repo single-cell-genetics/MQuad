@@ -46,8 +46,8 @@ def main():
         help="Minimum DP to include for modelling [default: 10]")
     group1.add_option("--minCell", type='int', dest="minCell", default=2,
         help=("Minimum no. of cells in minor component [default: 2]"))
-    group1.add_option("--batchFit", type='int', dest="batch_fit", default=0,
-        help=("1 if fit MixBin model using batch mode, 0 else [default: 0]"))
+    group1.add_option("--batchFit", type='int', dest="batch_fit", default=1,
+        help=("1 if fit MixBin model using batch mode, 0 else [default: 1]"))
     group1.add_option("--batchSize", type='int', dest="batch_size", default=128,
         help=("Number of variants in one batch, cooperate with --nproc for speeding up [default: 128]"))
     
@@ -63,8 +63,8 @@ def main():
 
     ## out directory
     if options.out_dir is None:
-        print("Warning: no outDir provided, we use $cellFilePath/mquad/")
-        out_dir = os.path.dirname(os.path.abspath(options.cell_file)) + "/mquad/"
+        print("Warning: no outDir provided, we use $cellFilePath/mquad")
+        out_dir = os.path.dirname(os.path.abspath(options.cell_file)) + "/mquad"
     elif os.path.dirname(options.out_dir) == "":
         out_dir= "./" + options.out_dir
     else:
@@ -123,6 +123,7 @@ def main():
             best_ad, best_dp = mdphd.selectInformativeVariants(min_cells = minCell, out_dir = out_dir, tenx_cutoff=cutoff)
         else:
             #use sparse mode for faster performance
+            #default to sparse mode in v1.6.0
             mdphd = MquadSparseMixBin(
                 AD=cell_dat['AD'], 
                 DP=cell_dat['DP'], 
