@@ -237,7 +237,7 @@ class Mquad():
         if tenx_cutoff is None:
             print('[MQuad] Finding knee point for deltaBIC cutoff...')
             #self.filt_df = self.sorted_df[self.sorted_df.deltaBIC >= 10]
-            x,y,knee_x, knee_y = findKnee(self.df.deltaBIC)
+            x,y,knee_x, cutoff = findKnee(self.df.deltaBIC)
             plt.plot(x, y)
             plt.axvline(x=knee_x, color="black", linestyle='--',label="cutoff")
             plt.legend()
@@ -245,8 +245,12 @@ class Mquad():
             plt.xlabel("Cumulative probability")
             plt.savefig(out_dir + '/' + 'deltaBIC_cdf.pdf')
 
-            self.final_df = self.sorted_df[0:int(len(y) * (1 - knee_x))]
-            self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
+            print('deltaBIC cutoff = ', cutoff)
+            #self.sorted_df['VALID'] = self.validateSNP(self.sorted_df.variant_name)
+            self.sorted_df['PASS_KP'] = self.sorted_df.deltaBIC.apply(lambda x: True if x >= cutoff else False)
+            self.sorted_df['PASS_MINCELLS'] = self.sorted_df.num_cells_minor_cpt.apply(lambda x: True if x >= min_cells else False)
+
+            self.final_df = self.sorted_df[(self.sorted_df.PASS_KP == True) & (self.sorted_df.PASS_MINCELLS == True)]
 
         else:
             print('[MQuad] Tenx mode used with cutoff = ' + str(tenx_cutoff))

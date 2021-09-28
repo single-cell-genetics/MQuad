@@ -50,7 +50,8 @@ def main():
         help=("1 if fit MixBin model using batch mode, 0 else [default: 1]"))
     group1.add_option("--batchSize", type='int', dest="batch_size", default=128,
         help=("Number of variants in one batch, cooperate with --nproc for speeding up [default: 128]"))
-    
+    group1.add_option("--beta", type='int', dest="beta_mode", default=False,
+        help=("Use betabinomial model if True [default: False]"))
     
     parser.add_option_group(group0)
     parser.add_option_group(group1)
@@ -108,6 +109,7 @@ def main():
     batch_size = options.batch_size
     cutoff = options.cutoff
     minCell = options.minCell
+    beta = options.beta_mode
     
     ## Main functions
     if options.BIC_params is not None:
@@ -117,10 +119,10 @@ def main():
         best_ad, best_dp = mdphd.selectInformativeVariants(min_cells = minCell, out_dir = out_dir, existing_df=options.BIC_params, tenx_cutoff=cutoff)
     else:
         if options.batch_fit == 0:
-            mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
-                            variant_names = cell_dat['variants'])
-            df = mdphd.fit_deltaBIC(out_dir = out_dir, nproc = nproc, minDP = minDP, beta_mode = False)
-            best_ad, best_dp = mdphd.selectInformativeVariants(min_cells = minCell, out_dir = out_dir, tenx_cutoff=cutoff)
+                mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
+                                variant_names = cell_dat['variants'])
+                df = mdphd.fit_deltaBIC(out_dir = out_dir, nproc = nproc, minDP = minDP, beta_mode = beta)
+                best_ad, best_dp = mdphd.selectInformativeVariants(min_cells = minCell, out_dir = out_dir, tenx_cutoff=cutoff)
         else:
             #use sparse mode for faster performance
             #default to sparse mode in v1.6.0

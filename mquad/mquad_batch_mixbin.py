@@ -190,7 +190,7 @@ class MquadSparseMixBin():
             plt.savefig(out_dir + '/deltaBIC_cdf.pdf')
 
             #make a PASS/FAIL column in self.df for easier subsetting
-            print(cutoff)
+            print('deltaBIC cutoff = ', cutoff)
             #self.sorted_df['VALID'] = self.validateSNP(self.sorted_df.variant_name)
             self.sorted_df['PASS_KP'] = self.sorted_df.deltaBIC.apply(lambda x: True if x >= cutoff else False)
             self.sorted_df['PASS_MINCELLS'] = self.sorted_df.num_cells_minor_cpt.apply(lambda x: True if x >= min_cells else False)
