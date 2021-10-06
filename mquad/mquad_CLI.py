@@ -50,8 +50,8 @@ def main():
         help=("1 if fit MixBin model using batch mode, 0 else [default: 1]"))
     group1.add_option("--batchSize", type='int', dest="batch_size", default=128,
         help=("Number of variants in one batch, cooperate with --nproc for speeding up [default: 128]"))
-    group1.add_option("--beta", type='int', dest="beta_mode", default=False,
-        help=("Use betabinomial model if True [default: False]"))
+    group1.add_option("--beta", type='int', dest="beta_mode", default=0,
+        help=("Use betabinomial model if True [default: 0]"))
     
     parser.add_option_group(group0)
     parser.add_option_group(group1)
@@ -109,7 +109,10 @@ def main():
     batch_size = options.batch_size
     cutoff = options.cutoff
     minCell = options.minCell
-    beta = options.beta_mode
+    if options.beta_mode == 1:
+        beta = True
+    elif options.beta_mode == 0:
+        beta = False
     
     ## Main functions
     if options.BIC_params is not None:
