@@ -165,7 +165,7 @@ class MquadSparseMixBin():
         #return df of all metrics
         return self.df
 
-    def selectInformativeVariants(self, min_cells=2, export_heatmap=True, export_mtx=True, out_dir=None):
+    def selectInformativeVariants(self, min_cells=2, export_heatmap=True, export_mtx=True, out_dir=None, existing_df=None, tenx_cutoff=None):
         #takes self.df, return best_ad and best_dp as array
 
         if self.df is None:
@@ -180,30 +180,37 @@ class MquadSparseMixBin():
             else:
                 print('Out directory already exists, overwriting content inside...')
 
-            x, y, knee, cutoff = findKnee(self.df.deltaBIC)
-            
-            plt.plot(x, y)
-            plt.axvline(x=knee, color="black", linestyle='--',label="cutoff")
-            plt.legend()
-            plt.ylabel("\u0394BIC")
-            plt.xlabel("Cumulative probability")
-            plt.savefig(out_dir + '/deltaBIC_cdf.pdf')
+            if tenx_cutoff is None:
+                x, y, knee, cutoff = findKnee(self.df.deltaBIC)
+                
+                plt.plot(x, y)
+                plt.axvline(x=knee, color="black", linestyle='--',label="cutoff")
+                plt.legend()
+                plt.ylabel("\u0394BIC")
+                plt.xlabel("Cumulative probability")
+                plt.savefig(out_dir + '/deltaBIC_cdf.pdf')
 
-            #make a PASS/FAIL column in self.df for easier subsetting
-            print('deltaBIC cutoff = ', cutoff)
-            #self.sorted_df['VALID'] = self.validateSNP(self.sorted_df.variant_name)
-            self.sorted_df['PASS_KP'] = self.sorted_df.deltaBIC.apply(lambda x: True if x >= cutoff else False)
-            self.sorted_df['PASS_MINCELLS'] = self.sorted_df.num_cells_minor_cpt.apply(lambda x: True if x >= min_cells else False)
+                #make a PASS/FAIL column in self.df for easier subsetting
+                print('deltaBIC cutoff = ', cutoff)
+                #self.sorted_df['VALID'] = self.validateSNP(self.sorted_df.variant_name)
+                self.sorted_df['PASS_KP'] = self.sorted_df.deltaBIC.apply(lambda x: True if x >= cutoff else False)
+                self.sorted_df['PASS_MINCELLS'] = self.sorted_df.num_cells_minor_cpt.apply(lambda x: True if x >= min_cells else False)
 
-            self.final_df = self.sorted_df[(self.sorted_df.PASS_KP == True) & (self.sorted_df.PASS_MINCELLS == True)]
-            #print(self.final_df.head())
-            
-            #will deprecate in later versions
-            #self.final_df = self.sorted_df[0:int(len(y) * (1 - knee))]
-            #self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
+                self.final_df = self.sorted_df[(self.sorted_df.PASS_KP == True) & (self.sorted_df.PASS_MINCELLS == True)]
+                #print(self.final_df.head())
+                
+                #will deprecate in later versions
+                #self.final_df = self.sorted_df[0:int(len(y) * (1 - knee))]
+                #self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
 
-            print('Number of variants passing threshold: '  + str(len(self.final_df['variant_name'])))
+                print('Number of variants passing threshold: '  + str(len(self.final_df['variant_name'])))
 
+            else:
+                print('[MQuad] Tenx mode used with cutoff = ' + str(tenx_cutoff))
+                self.final_df = self.sorted_df[self.sorted_df.deltaBIC >= float(tenx_cutoff)]
+                self.final_df = self.final_df[self.sorted_df.num_cells_minor_cpt >= min_cells]
+                print('Number of variants passing threshold: '  + str(len(self.final_df['variant_name'])))
+                
             if len(self.final_df['variant_name']) != 0:
                 passed_variants = self.final_df['variant_name']
                 idx = [self.variants.index(i) for i in passed_variants]

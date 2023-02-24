@@ -140,7 +140,7 @@ def main():
                 nproc=nproc,
                 batch_size=batch_size
             )
-            best_ad, best_dp = mdphd.selectInformativeVariants(min_cells = minCell, out_dir = out_dir)
+            best_ad, best_dp = mdphd.selectInformativeVariants(min_cells = minCell, out_dir = out_dir, tenx_cutoff=cutoff)
     
     run_time = time.time() - START_TIME
     print("[MQuad] All done: %d min %.1f sec" %(int(run_time / 60), 
