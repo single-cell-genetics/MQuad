@@ -5,6 +5,7 @@ import sys
 import time
 import numpy as np
 from scipy.io import mmread
+from scipy.sparse import csc_matrix
 from optparse import OptionParser, OptionGroup
 
 from .version import __version__
@@ -86,8 +87,8 @@ def main():
             print("Error: mtxData requires 2 comma separated files")
             sys.exit(1)
         cell_dat = {}
-        cell_dat['AD'] = mmread(matrix_files[0])
-        cell_dat['DP'] = mmread(matrix_files[1])
+        cell_dat['AD'] = csc_matrix(mmread(matrix_files[0]))
+        cell_dat['DP'] = csc_matrix(mmread(matrix_files[1]))
         cell_dat['variants'] = ['SNP%d' %(x + 1) for x in 
                                 range(cell_dat['AD'].shape[0])]
         
@@ -128,7 +129,7 @@ def main():
                 best_ad, best_dp = mdphd.selectInformativeVariants(min_cells = minCell, out_dir = out_dir, tenx_cutoff=cutoff)
         else:
             #use sparse mode for faster performance
-            #default to sparse mode in v1.6.0
+            #default to sparse mode in v0.1.6
             mdphd = MquadSparseMixBin(
                 AD=cell_dat['AD'], 
                 DP=cell_dat['DP'], 
