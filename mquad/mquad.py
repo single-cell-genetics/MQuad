@@ -280,7 +280,7 @@ class Mquad():
             #af = af.fillna(0)
             fig, ax = plt.subplots(figsize=(8,6))
             plt.title("Allele frequency of top variants")
-            plt.style.use('seaborn-dark')
+            #plt.style.use('seaborn-dark')
             pal = "YlGnBu"
             if self.variants is not None:
                 sns.heatmap(af, cmap=pal, yticklabels=renamed_vars)

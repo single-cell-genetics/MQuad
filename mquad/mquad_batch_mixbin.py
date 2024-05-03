@@ -239,7 +239,7 @@ class MquadSparseMixBin():
             #af = af.fillna(0)
             fig, ax = plt.subplots(figsize=(15,10))
             plt.title("Allele frequency of top variants")
-            plt.style.use('seaborn-dark')
+            plt.style.use('seaborn-v0_8-dark')
             if self.variants is not None:
                 sns.heatmap(af, cmap='Greens', yticklabels=renamed_vars)
             else:
