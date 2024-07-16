@@ -1,4 +1,5 @@
 #Wrapper function for detecting useful mitochondrial variants
+#Might deprecate in later versions as all of MQuad is moved to batch mixbin version
 
 #import stuff
 import os

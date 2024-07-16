@@ -168,6 +168,12 @@ class MquadSparseMixBin():
     def selectInformativeVariants(self, min_cells=2, export_heatmap=True, export_mtx=True, out_dir=None, existing_df=None, tenx_cutoff=None):
         #takes self.df, return best_ad and best_dp as array
 
+        if existing_df is not None:
+            #input /path/to/unsorted_debug_BIC_params.csv for existing df if model is already fit
+            print('[MQuad] Fitted model detected, using' + existing_df + '...')
+            self.df = pd.read_csv(existing_df)
+            self.sorted_df = self.df.sort_values(by=['deltaBIC'], ascending=False)
+
         if self.df is None:
             print('Fitted model not found! Have you run fit_deltaBIC/fit_logLik yet?')
         else:
@@ -179,6 +185,7 @@ class MquadSparseMixBin():
                         print("Can't make directory, do you have permission?")
             else:
                 print('Out directory already exists, overwriting content inside...')
+
 
             if tenx_cutoff is None:
                 x, y, knee, cutoff = findKnee(self.df.deltaBIC)

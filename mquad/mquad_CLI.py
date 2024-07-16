@@ -1,4 +1,4 @@
-# CLI for mitoMut
+# CLI for MQuad
 
 import os
 import sys
@@ -117,7 +117,7 @@ def main():
     
     ## Main functions
     if options.BIC_params is not None:
-        mdphd = Mquad(AD = cell_dat['AD'], DP = cell_dat['DP'], 
+        mdphd = MquadSparseMixBin(AD = cell_dat['AD'], DP = cell_dat['DP'], 
                         variant_names = cell_dat['variants'])
         print("[MQuad] Using existing BIC params to filter variants only...")
         best_ad, best_dp = mdphd.selectInformativeVariants(min_cells = minCell, out_dir = out_dir, existing_df=options.BIC_params, tenx_cutoff=cutoff)
